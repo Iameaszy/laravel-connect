@@ -2,10 +2,12 @@
 use Config;
 namespace App\Http\Controllers;
 
+Use App\User;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Hash;
 
 class HomeController extends Controller
 {
@@ -16,7 +18,8 @@ class HomeController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->registerAdmin();
+        $this->middleware('auth')->except('start');
     }
 
     /**
@@ -31,11 +34,11 @@ class HomeController extends Controller
             $client = new Client([
                 // You can set any number of default request options.
                 'http_errors' => false,
-                'headers' => [ 'Content-Type' => 'application/json' ]
+                'headers' => ['Content-Type' => 'application/json'],
             ]);
             $key = config('app.stripe_test_secret_key');
-            $response = $client->post('https://connect.stripe.com/oauth/token', ['body'=>json_encode(['code' => $query['code'], 'grant_type' => 'authorization_code',
-                'client_secret' => $key
+            $response = $client->post('https://connect.stripe.com/oauth/token', ['body' => json_encode(['code' => $query['code'], 'grant_type' => 'authorization_code',
+                'client_secret' => $key,
             ])]);
             $statusCode = $response->getStatusCode();
             $body = json_decode($response->getBody(), true);
@@ -55,4 +58,18 @@ class HomeController extends Controller
             return view('home', $query);
         }
     }
+    public function start()
+    {
+        return view('welcome');
+    }
+    public function registerAdmin()
+    {
+        $admin_email = config('app.admin_email');
+        $admin_password = config('app.admin_password');
+        $user = User::where('email', $admin_email)->first();
+        if (!$user) {
+            return User::firstOrCreate(['email' => $admin_email], ['password' => Hash::make($admin_password), 'is_admin' => 1, 'category' => 'admin']);
+        }
+    }
+
 }

@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Response;
 use GuzzleHttp\Exception\RequestException;
-
+use App\Payment;
 use GuzzleHttp\Client;
 
 \Stripe\Stripe::setApiKey(config('app.stripe_test_secret_key'));
@@ -40,12 +40,20 @@ class StripeController extends Controller
         $charge = \Stripe\Charge::create(['amount' => (int)$data['amount']*100, 'currency' => config('app.stripe_currency'), 'source' => $data['token'],
         'transfer_group'=>$token
         ]);
-        $toBeStored = [
-            'tranfer_group'=> $charge->transfer_group,
+        $user = Auth::user();
+        $queries = [
+            'amount'=>(int)$charge->amount/100,
             'payment_id' => $charge->id,
-            'amount'=> $charge->amount
+            'transfer_group'=> $charge->transfer_group,
         ];
-        return redirect()->route('home',$toBeStored);
+
+        $payment = Payment::create([
+            'amount'=>(int)$charge->amount/100,
+            'payment_id' => $charge->id,
+            'transfer_group'=> $charge->transfer_group,
+            'buyer_id'=>$user->id
+        ]);
+        return redirect()->route('home',$queries);
     }
 
    public function getToken($length){
@@ -84,7 +92,7 @@ class StripeController extends Controller
                 (view('home',['error'=>'Server Error','error_description'=>'Error from the server, try again later...']));
             }
             $user = Auth::user();
-            DB::table('users')->where('id',$user['id'])->update(['connected_id'=>$body->stripe_user_id]);
+            $newUser = DB::table('users')->where('id',$user['id'])->update(['connected_id'=>$body->stripe_user_id]);
             return view('home',$body);
        } elseif ($query && isset($query['error'])){
            return view('home',$query);

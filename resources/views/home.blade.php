@@ -218,5 +218,12 @@ $paymentForm.on('submit',function(e){
 $("#myModal").modal('show');
 $("#myModal2").modal('show');
 $("#paymentForm").modal('show');
+const urlParams = new URLSearchParams(window.location.search);
+const myParam = urlParams.get('error')||urlParams.get('code')||urlParams.get('payment_id')
+if(myParam){
+    setTimeout(function(){
+        location.replace("http://localhost:8000/home");
+    },4000);
+}
 </script>
 @endsection

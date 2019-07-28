@@ -7,6 +7,8 @@ return [
     'stripe_live_secret_key' => env('STRIPE_LIVE_SECRET_KEY',null),
     'stripe_live_pk_key' => env('STRIPE_LIVE_PUBLISHABLE_KEY',null),
     'stripe_currency' => env('STRIPE_CURRENCY','usd'),
+    'admin_email' => env('ADMIN_EMAIL',''),
+    'admin_password' => env('ADMIN_PASSWORD',''),
 
     /*
     |--------------------------------------------------------------------------
